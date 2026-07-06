@@ -1,0 +1,23 @@
+services:
+  restate-server:
+    image: docker.io/restatedev/restate:latest
+    container_name: legal-restate-server
+    ports:
+      - "8080:8080"
+      - "9070:9070"
+    environment:
+      - RESTATE_LOG_LEVEL=info
+
+  legal-agent:
+    build: .
+    container_name: legal-support-agent-py
+    ports:
+      - "9080:9080"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - PORT=9080
+    depends_on:
+      - restate-server

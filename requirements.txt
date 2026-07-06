@@ -1,0 +1,6 @@
+restate-sdk[serde]>=1.0.0
+google-generativeai>=0.8.0
+python-dotenv>=1.0.0
+langchain-neo4j>=0.1.0
+neo4j>=5.20.0
+hypercorn>=0.16.0
