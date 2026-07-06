@@ -7,6 +7,7 @@ def query_graph_rag(query: str) -> Dict[str, Any]:
     """
     Kết nối đến Neo4j Aura và truy vấn GraphRAG bằng Vector Search.
     """
+    print(f"\n👉 [query_graph_rag] INPUT - Câu truy vấn gốc: '{query}'")
     uri = os.environ.get("NEO4J_URI")
     username = os.environ.get("NEO4J_USERNAME")
     password = os.environ.get("NEO4J_PASSWORD")
@@ -53,10 +54,15 @@ def query_graph_rag(query: str) -> Dict[str, Any]:
             if res.get('id'):
                 source_nodes.append(str(res.get('id')))
                 
-        return {
+        output_data = {
             "context": "\n".join(context_lines),
             "sourceNodes": source_nodes
         }
+        
+        print(f"✅ [query_graph_rag] OUTPUT - Tổng hợp Context gửi đi thành công!")
+        print(f"  ↳ Tổng số Source Nodes: {output_data['sourceNodes']}")
+        return output_data
+                
         
     except Exception as e:
         print(f"[GraphRAG Error] Lỗi khi lấy context từ Neo4j: {e}")

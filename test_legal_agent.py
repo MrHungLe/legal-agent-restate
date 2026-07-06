@@ -1,6 +1,7 @@
 import requests
 import json
 import sys
+import time  # Bổ sung để đo thời gian phản hồi
 
 URL = "http://localhost:8080/LegalAgent/ask_legal_question"
 HEADERS = {"Content-Type": "application/json"}
@@ -11,9 +12,10 @@ def main():
     print("Gõ 'exit' hoặc 'quit' để thoát chương trình.")
     print("-" * 60)
 
-    # Thử kiểm tra xem Restate Server có hoạt động không
+    # Kiểm tra xem Restate Server có hoạt động không bằng endpoint health hoặc bắt lỗi kết nối
     try:
-        requests.get("http://localhost:8080", timeout=2)
+        # Restate hỗ trợ endpoint /restate/health để kiểm tra trạng thái hệ thống
+        response = requests.get("http://localhost:8080/restate/health", timeout=2)
     except requests.exceptions.ConnectionError:
         print("\n❌ [Lỗi kết nối]: Không thể kết nối tới Restate Server (port 8080).")
         print("👉 Hãy chắc chắn rằng bạn đã khởi động Restate Server (ví dụ: `docker compose up -d restate-server`).")
@@ -32,16 +34,27 @@ def main():
                 
             print("⏳ Đang xử lý câu hỏi của bạn (tra cứu GraphRAG & Gemini)...")
             
-            # Request body cho Restate handler ask_legal_question(ctx, question)
-            # Theo Restate protocol, tham số được truyền trong JSON object tương tự như sau:
-            # {"question": "nội dung câu hỏi"}
-            payload = {"question": question}
+            # --- ĐÃ SỬA: Cấu trúc payload chuẩn theo Restate protocol ---
+            payload = {
+                "request": {
+                    "question": question
+                }
+            }
+            
+            # Đo thời gian bắt đầu
+            start_time = time.time()
             
             response = requests.post(URL, headers=HEADERS, json=payload)
+            
+            # Tính thời gian xử lý
+            elapsed_time = round(time.time() - start_time, 2)
 
             if response.status_code == 200:
-                result = response.json()
-                print("\n🤖 Trả lời từ Agent:")
+                # --- ĐÃ SỬA: Restate trả về kết quả bọc trong object "response" ---
+                full_result = response.json()
+                result = full_result.get("response", {})
+                
+                print(f"\n🤖 Trả lời từ Agent (Xử lý trong {elapsed_time}s):")
                 print(result.get("answer", "Không có câu trả lời."))
                 
                 sources = result.get("sources", [])

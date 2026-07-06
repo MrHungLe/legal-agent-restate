@@ -1,32 +1,37 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 def get_embedding(text: str) -> list[float]:
     """
-    Tạo vector embedding cho văn bản bằng Gemini để dùng cho Vector Search.
+    Tạo vector embedding cho văn bản bằng Gemini SDK mới (google-genai).
     """
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY is not set")
     
-    genai.configure(api_key=api_key)
-    result = genai.embed_content(
-        model="models/text-embedding-004",
-        content=text,
-        task_type="retrieval_document",
+    # Khởi tạo client theo SDK mới
+    client = genai.Client(api_key=api_key)
+    
+    result = client.models.embed_content(
+        model="text-embedding-004",
+        contents=text,
     )
-    return result['embedding']
+    # SDK mới trả về object ContentEmbedding, truy cập qua .embedding.values
+    return result.embedding.values
+    print(f"✅ [get_embedding] OUTPUT - Tạo embedding thành công. Kích thước vector: {len(embedding_values)} | Xem trước 5 phần tử đầu: {embedding_values[:5]}...")
+    return embedding_values
 
 def generate_legal_answer(question: str, context: str) -> str:
     """
-    Generate an answer using Google Gemini based on the provided context
+    Generate an answer using Google Gemini based on the provided context (google-genai SDK)
     """
     api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key or api_key == "your_gemini_api_key_here":
+    if not api_key:
         raise ValueError("GEMINI_API_KEY is not set in environment variables")
 
     try:
-        genai.configure(api_key=api_key)
+        client = genai.Client(api_key=api_key)
         
         system_instruction = """
         Bạn là một chuyên gia pháp lý am hiểu sâu sắc về hệ thống pháp luật Việt Nam.
@@ -39,15 +44,6 @@ def generate_legal_answer(question: str, context: str) -> str:
         4. Trả lời một cách chuyên nghiệp, dễ hiểu, trích dẫn rõ nguồn luật nếu có trong Context.
         """
         
-        # ĐÃ SỬA LỖI MODEL TẠI ĐÂY
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=system_instruction,
-            generation_config=genai.GenerationConfig(
-                temperature=0.2, 
-            )
-        )
-
         prompt = f"""
         [Context từ hệ thống tra cứu pháp luật (GraphRAG)]:
         {context}
@@ -58,7 +54,16 @@ def generate_legal_answer(question: str, context: str) -> str:
         Câu trả lời của bạn:
         """
 
-        response = model.generate_content(prompt)
+        # Cú pháp cấu hình hệ thống và tạo nội dung mới
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.2, 
+            )
+        )
+        print(f"✅ [generate_legal_answer] OUTPUT - Kết quả từ Gemini:\n---\n{response.text}\n---")
         return response.text
         
     except Exception as e:
