@@ -11,7 +11,8 @@ def query_graph_rag(query: str) -> Dict[str, Any]:
     uri = os.environ.get("NEO4J_URI")
     username = os.environ.get("NEO4J_USERNAME")
     password = os.environ.get("NEO4J_PASSWORD")
-    
+    database = os.environ.get("NEO4J_DATABASE", "aura")
+
     if not uri or not username or not password:
         raise ValueError("Thông tin kết nối Neo4j chưa được cấu hình đầy đủ trong biến môi trường.")
         
@@ -21,7 +22,8 @@ def query_graph_rag(query: str) -> Dict[str, Any]:
         graph = Neo4jGraph(
             url=uri,
             username=username,
-            password=password
+            password=password,
+            database=database
         )
         
         # 1. Biến đổi câu hỏi thành Vector
@@ -65,5 +67,9 @@ def query_graph_rag(query: str) -> Dict[str, Any]:
                 
         
     except Exception as e:
-        print(f"[GraphRAG Error] Lỗi khi lấy context từ Neo4j: {e}")
-        raise Exception(f"Neo4j GraphRAG Error: {str(e)}")
+        print(f"❌ [GraphRAG Error] Lỗi khi lấy context từ Neo4j: {e}")
+        # THAY VÌ raise Exception(f"..."), hãy trả về kết quả trống an toàn để mạch code chạy tiếp:
+        return {
+            "context": f"Hệ thống không thể kết nối dữ liệu đồ thị tại thời điểm này do lỗi: {str(e)}",
+            "sourceNodes": []
+        }

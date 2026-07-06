@@ -10,16 +10,17 @@ def get_embedding(text: str) -> list[float]:
     if not api_key:
         raise ValueError("GEMINI_API_KEY is not set")
     
-    # Khởi tạo client theo SDK mới
+    # Khởi tạo client theo google-genai SDK
     client = genai.Client(api_key=api_key)
     
+    # Dùng model gemini-embedding-001 (text-embedding-004 không khả dụng với API key này)
     result = client.models.embed_content(
-        model="text-embedding-004",
+        model="models/gemini-embedding-001",
         contents=text,
     )
-    # SDK mới trả về object ContentEmbedding, truy cập qua .embedding.values
-    return result.embedding.values
-    print(f"✅ [get_embedding] OUTPUT - Tạo embedding thành công. Kích thước vector: {len(embedding_values)} | Xem trước 5 phần tử đầu: {embedding_values[:5]}...")
+    # SDK trả về EmbedContentResponse với .embeddings[0].values
+    embedding_values = result.embeddings[0].values
+    print(f"✅ [get_embedding] Tạo embedding thành công. Kích thước vector: {len(embedding_values)}")
     return embedding_values
 
 def generate_legal_answer(question: str, context: str) -> str:

@@ -34,11 +34,9 @@ def main():
                 
             print("⏳ Đang xử lý câu hỏi của bạn (tra cứu GraphRAG & Gemini)...")
             
-            # --- ĐÃ SỬA: Cấu trúc payload chuẩn theo Restate protocol ---
+            # --- Payload: đúng format Restate nhận Dict ---
             payload = {
-                "request": {
-                    "question": question
-                }
+                "question": question
             }
             
             # Đo thời gian bắt đầu
@@ -50,9 +48,8 @@ def main():
             elapsed_time = round(time.time() - start_time, 2)
 
             if response.status_code == 200:
-                # --- ĐÃ SỬA: Restate trả về kết quả bọc trong object "response" ---
-                full_result = response.json()
-                result = full_result.get("response", {})
+                # --- Restate trả về kết quả trực tiếp (không có wrapper "response") ---
+                result = response.json()
                 
                 print(f"\n🤖 Trả lời từ Agent (Xử lý trong {elapsed_time}s):")
                 print(result.get("answer", "Không có câu trả lời."))
